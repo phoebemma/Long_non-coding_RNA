@@ -20,9 +20,8 @@ transcript <- lncRNA %>%
 
 
 
-model_settings <- list(formula = list(counts ~  time + time:condition + age+ 
-                                        age:condition + sex:condition(1|participant),
-                       family = list(glmmTMB::nbinom2())
+model_settings <- list(formula = list(counts ~  time + time:condition + age+ age:condition + sex:condition(1|participant)),
+                       family = list(glmmTMB::nbinom2()))
                      
 
 
