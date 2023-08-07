@@ -18,16 +18,23 @@ transcript <- lncRNA %>%
   mutate(counts = as.integer(round(counts,0))) %>%
   print()
 
+\
 
 
-form <- list(formula = list(counts ~  time + time:condition + age+ age:condition + sex:condition(1|participant)),
-                       family = list(glmmTMB::nbinom2()))
+form <- list(formula = counts ~  time + time:condition + age + age:condition + (1|participant),
+                       family = glmmTMB::nbinom2())
                      
-
+#sapply(lapply(metadata, unique), length)
 
 results <- seq_wrapper(fitting_fun = glmmTMB::glmmTMB,
                        arguments = form,
-                       data = transcript,
+                       data = lncRNA,
                        metadata = metadata,
                        samplename = "sample_id",
+                       additional_vars = NULL,
+                       subset = NULL,
                        cores = "max")
+
+summary(results)
+
+#glmmQvals(results)
