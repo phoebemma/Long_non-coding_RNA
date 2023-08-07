@@ -20,13 +20,13 @@ transcript <- lncRNA %>%
 
 
 
-model_settings <- list(formula = list(counts ~  time + time:condition + age+ age:condition + sex:condition(1|participant)),
+form <- list(formula = list(counts ~  time + time:condition + age+ age:condition + sex:condition(1|participant)),
                        family = list(glmmTMB::nbinom2()))
                      
 
 
 results <- seq_wrapper(fitting_fun = glmmTMB::glmmTMB,
-                       arguments = model_settings,
+                       arguments = form,
                        data = transcript,
                        metadata = metadata,
                        samplename = "sample_id",
