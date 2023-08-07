@@ -1,0 +1,8 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+
+#Evereything in the /data folder
+/data
+/trainomeMetaData
