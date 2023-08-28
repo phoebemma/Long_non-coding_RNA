@@ -1,6 +1,34 @@
 
 
 
+sum_fun <- function(x){
+  
+  cond_effects <- data.frame(cbind(data.frame(coef = rownames(coef(summary(x))$cond))),
+                             coef(summary(x))$cond, 
+                             
+                             row.names = NULL)
+  
+  return(cond_effects)
+  
+}
+
+
+eval_mod <- function(x) {
+  
+  sim <- DHARMa::simulateResiduals(x, n = 1000)
+  
+  disp <- DHARMa::testDispersion(sim, plot = FALSE)
+  unif <- DHARMa::testUniformity(sim, plot = FALSE)
+  zinfl <- DHARMa::testZeroInflation(sim, plot = FALSE)
+  
+  results <- data.frame(pval.disp = disp$p.value, 
+                        pval.unif = unif$p.value, 
+                        pval.zinfl = zinfl$p.value)
+  
+  return(results)
+}
+
+
 
 #function to read Kallisto files
 read_kallisto_output <- function(file){

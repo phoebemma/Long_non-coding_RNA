@@ -1,9 +1,9 @@
 #if (!require("BiocManager", quietly = TRUE))
  # install.packages("Homo.sapiens")
-#BiocManager::install("EnhancedVolcano");
+#BiocManager::install("clusterProfiler");
 #source("https://horvath.genetics.ucla.edu/html/CoexpressionNetwork/GeneAnnotation/installAnRichment.R");
 #installAnRichment();
-library(WGCNA)
+
 library(tidyverse)
 library(dplyr)
 library(DESeq2)
@@ -41,7 +41,9 @@ library(adegenet)
 library(glmmTMB)
 library(trainomeHelper)
 library(trainomeMetaData)
-
+library(DHARMa)
+library(marginaleffects)
+library(clusterProfiler)
 
 
 #listEnsembl()

@@ -1,40 +1,227 @@
 source("./libraries.R")
 source("./R/Trainome_functions.R")
-
+#install.packages('dplyr', type = 'source')
 
 #Load the lncRNA data and the metadata
 
-metadata <- readr::read_csv("./data/all_metadata.csv")
-lncRNA <- readr::read_csv("./data/lncRNAs.csv")
+
+lncRNA <- readr::read_csv("./data/lncRNAs.csv") #%>%
+ 
 
 
-colnames(lncRNA)
+# mutate_at(2:619, ~ as.integer(round(., 0))) %>%
+ # print()
 
-#Extract all except the first column
-transcript <- lncRNA %>%
-  pivot_longer(names_to = "sample_id",
-               values_to = "counts",
-               cols = X1023WVLL11:X99.subj40sample3) %>%
-  mutate(counts = as.integer(round(counts,0))) %>%
+metadata <- readr::read_csv("./data/all_metadata.csv") %>%
+  #drop the "MidExc rows 
+  #subset(time != "MidExc") %>%
+  mutate(time = factor(time, levels = c("PreExc", "MidExc",   "PostExc")), 
+         age = factor(age, levels = c("young", "old")), 
+         sex = factor(sex, levels = c("male", "female"))) %>%
+  
+  print()
+  
+  
+# Extract sample_ids that are common between lncRNAand metadata
+lncRNA_intersect <- (intersect(colnames(lncRNA), metadata$sample_id))
+  
+  
+#subsett the lncRNA data to only include the intersects
+lncRNA_data <- lncRNA %>%
+  subset( select = c("transcript_name", lncRNA_intersect))%>%
+  #Round counts to one significant figure
+  mutate_at(2:356, ~ as.integer(round(., 0))) %>%
+  print()
+colnames(lncRNA_data)
+  
+
+#extract genes with zero counts in all rows 
+#non_zero_counts <- rowSums(lncRNA_data[, -1]) > 0
+
+#percentage of non_zero counts 
+#sum(non_zero_counts, na.rm = T)/length(non_zero_counts)
+
+#lncRNA_data <- lncRNA_data[non_zero_counts,]
+
+
+#select only metadata that intersect
+meta_df <- metadata %>%
+  filter(sample_id %in% c(lncRNA_intersect)) %>%
   print()
 
-\
+ 
 
 
-form <- list(formula = counts ~  time + time:condition + age + age:condition + (1|participant),
+#How many samples of each study are represented in the data
+table(meta_df$study)
+table(meta_df$sex)
+table(meta_df$time)
+
+colnames(lncRNA_data)
+#Extract all except the first column
+transcript <- lncRNA_data %>%
+  pivot_longer(names_to = "sample_id",
+               values_to = "y",
+               cols = X102PostExcVLL14:X98.subj40sample7) %>%
+  #mutate(counts = as.integer(round(counts,0))) %>%
+  print()
+
+
+
+
+args<- list(formula = y ~  time  + age + age:time + sex + sex:time + (1|participant),
                        family = glmmTMB::nbinom2())
                      
-#sapply(lapply(metadata, unique), length)
+ncores <- parallel::detectCores()
+
+
+
 
 results <- seq_wrapper(fitting_fun = glmmTMB::glmmTMB,
-                       arguments = form,
-                       data = lncRNA,
-                       metadata = metadata,
+                       arguments = args,
+                       data = lncRNA_data,
+                       metadata = meta_df,
                        samplename = "sample_id",
-                       additional_vars = NULL,
-                       subset = NULL,
-                       cores = "max")
+                       summary_fun = sum_fun,
+                       eval_fun = eval_mod,
+                       exported = list(),
+                       #additional_vars = NULL,
+                       #subset = NULL,
+                       cores = ncores)
 
-summary(results)
+summary(results) 
 
-#glmmQvals(results)
+#save the result
+saveRDS(results, file = "./data/lncRNA_model.RDS")
+
+
+results <- readRDS("./data/lncRNA_model.RDS")
+
+#comparisons(results, variables = list(time = c("PreExc", "PostExc")),vcov = F,
+            #newdata = datagrid(sex = "female")
+           # )
+
+                        
+
+comparisons(results$model_fits[[1]], vcov = FALSE,
+            newdata = "marginalmeans",
+            variables = list(age = c("young", "old")), 
+            by = "time",
+            type = "response")
+
+
+
+
+ library(dplyr)
+
+
+x <- results%>%
+  dplyr::select(gene, method, coef, estimate, p.val)
+
+
+#Plot the values for time and age
+time_vs_age <- data.frame( bind_rows(results$model_summarises) %>%
+  mutate(target = rep(names(results$model_summarises), each = 9))) %>%
+  #filter(coef == "timePostExc:ageold")) %>%
+  mutate(adj.p = p.adjust(Pr...z.., method = "fdr"),
+         log2fc = Estimate/log(2), 
+         fcthreshold = if_else(abs(log2fc) > 0.5, "s", "ns")) #%>%
+  # ~ 1.4 fold change
+  #subset to include only those from or below p.value of 0.05 and significant threshold
+time_age_filtered <- filter(time_vs_age,  adj.p <= 0.05 & fcthreshold == "s")%>%
+  #remove the rows containing intercept
+  subset(!coef == "(Intercept)")
+
+
+#gsea <- enrichGO(time_vs_age$target, OrgDb = org.Hs.eg.db, 
+#                 keyType = "ENSEMBL", ont = "BP",
+#                 universe = time_age_filtered$target)
+#get the ensemble gene IDs as gsea doesnt seem to work with transcript names
+listMarts()
+ensembl=useMart("ENSEMBL_MART_ENSEMBL")
+datasets <- listDatasets(ensembl)
+ensembl=useDataset("hsapiens_gene_ensembl",mart=ensembl)
+attributes <- listAttributes(ensembl)
+#extract transcript biotypes and transcript names
+results_end_1 <- getBM(attributes = c("ensembl_gene_id","ensembl_transcript_id",
+                                      "ensembl_transcript_id"), 
+                       filters = "external_transcript_name",
+                       values = trans, mart = ensembl )
+
+trans <- unique(time_vs_age$target)
+require('org.Mm.eg.db')
+keytypes(org.Mm.eg.db)
+select(
+  org.Mm.eg.db,
+  keytype = 'ENSEMBLTRANS',
+  columns = c('ENSEMBL','ENSEMBLTRANS','ENTREZID','SYMBOL'),
+  keys = trans)
+
+
+background <- bitr(unique(time_vs_age$target), fromType = "GENENAME",
+                   toType =  c( "ENTREZID", "SYMBOL"),
+                   OrgDb = org.Hs.eg.db)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ggplot(aes( Pr...z..)) + geom_histogram(bins = 80) +
+   ggtitle(" lncRNA Pvalues time: age")
+
+
+
+
+  # subset to include only those with values = or less than 0.05
+time_vs_age_filtered <- subset(time_vs_age, Pr...z.. <= 0.05 & fcthreshold == "s")
+
+
+#By time alone
+ time_alone <- data.frame(bind_rows(results$model_summarises) %>%
+   mutate(target = rep(names(results$model_summarises), each = 9)) %>%
+   filter(coef == "timePostExc")) %>%
+   subset(Pr...z.. <= 0.05)
+ 
+ 
+   ggplot(aes(Pr...z..)) + geom_histogram(bins = 80) +
+   ggtitle("lncRNA Pvalues timePostExc")
+ 
+ 
+ bind_rows(results$model_summarises) %>%
+   mutate(target = rep(names(results$model_summarises), each = 9)) %>%
+   filter(coef == "timeMidExc") %>%
+   ggplot(aes(Pr...z..)) + geom_histogram(bins = 80) +
+   ggtitle("lncRNA Pvalues timeMidExc")
+ 
+ #by age alone
+ age_alone <- data.frame(bind_rows(results$model_summarises) %>%
+   mutate(target = rep(names(results$model_summarises), each = 9)) %>%
+   filter(coef == "ageold")) %>%
+   subset(Pr...z.. <= 0.05)
+   
+   ggplot(aes(Pr...z..)) + geom_histogram(bins = 80) +
+   ggtitle("lncRNA Pvalues ageold")
+ 
+ #by sex
+ bind_rows(results$model_summarises) %>%
+   mutate(target = rep(names(results$model_summarises), each = 9)) %>%
+   filter(coef == "sexfemale") %>%
+   ggplot(aes(Pr...z..)) + geom_histogram(bins = 80) +
+   ggtitle("lncRNA Pvalues sexfemale")
+ 
+ bind_rows(results$model_summarises) %>%
+   mutate(target = rep(names(results$model_summarises), each = 9)) %>%
+   filter(coef == "timePostExc:sexfemale") %>%
+   ggplot(aes(Pr...z..)) + geom_histogram(bins = 80) +
+   ggtitle("lncRNA Pvalues timePostExc:sexfemale")
