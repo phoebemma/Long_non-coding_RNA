@@ -1,6 +1,6 @@
 #if (!require("BiocManager", quietly = TRUE))
  # install.packages("Homo.sapiens")
-#BiocManager::install("clusterProfiler");
+#BiocManager::install("Homo.sapiens");
 #source("https://horvath.genetics.ucla.edu/html/CoexpressionNetwork/GeneAnnotation/installAnRichment.R");
 #installAnRichment();
 
@@ -8,10 +8,7 @@ library(tidyverse)
 library(dplyr)
 library(DESeq2)
 library(edgeR)
-library(tximport)
 library(GenomicFeatures)
-library(tximeta)
-library(ASpli)
 library(biomaRt)
 library(data.table)
 library(plotly)
@@ -19,9 +16,9 @@ library(RColorBrewer)
 library(ggplot2)
 library(data.table)
 library(cluster)
-library(genefilter)
+#library(genefilter)
 library(umap)
-library(impute)
+#library(impute)
 library(ggforce)
 library(limma)
 library(org.Hs.eg.db)
@@ -30,11 +27,11 @@ library(reshape2)
 library(gplots)
 library(plyr)
 library(statmod)
-library(MOFA2)
+#library(MOFA2)
 library(factoextra)
 library(pheatmap)
-library(apeglm)
-library(EnhancedVolcano)
+#library(apeglm)
+#library(EnhancedVolcano)
 library(umap)
 library(vcfR)
 library(adegenet)
@@ -44,9 +41,9 @@ library(trainomeMetaData)
 library(DHARMa)
 library(marginaleffects)
 library(clusterProfiler)
-
-
-#listEnsembl()
+library(GOfuncR)
+library(home)
+library(Homo.sapiens)
 
 
 

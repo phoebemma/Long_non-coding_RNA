@@ -133,9 +133,6 @@ time_age_filtered <- filter(time_vs_age,  adj.p <= 0.05 & fcthreshold == "s")%>%
   subset(!coef == "(Intercept)")
 
 
-#gsea <- enrichGO(time_vs_age$target, OrgDb = org.Hs.eg.db, 
-#                 keyType = "ENSEMBL", ont = "BP",
-#                 universe = time_age_filtered$target)
 #get the ensemble gene IDs as gsea doesnt seem to work with transcript names
 listMarts()
 ensembl=useMart("ENSEMBL_MART_ENSEMBL")
@@ -143,25 +140,88 @@ datasets <- listDatasets(ensembl)
 ensembl=useDataset("hsapiens_gene_ensembl",mart=ensembl)
 attributes <- listAttributes(ensembl)
 #extract transcript biotypes and transcript names
-results_end_1 <- getBM(attributes = c("ensembl_gene_id","ensembl_transcript_id",
-                                      "ensembl_transcript_id"), 
-                       filters = "external_transcript_name",
-                       values = trans, mart = ensembl )
+results_end_1 <- getBM(attributes = c("ensembl_gene_id",
+                                      "ensembl_transcript_id", "external_transcript_name"), 
+                       values = time_vs_age$target, mart = ensembl )
 
-trans <- unique(time_vs_age$target)
-require('org.Mm.eg.db')
-keytypes(org.Mm.eg.db)
-select(
-  org.Mm.eg.db,
-  keytype = 'ENSEMBLTRANS',
-  columns = c('ENSEMBL','ENSEMBLTRANS','ENTREZID','SYMBOL'),
-  keys = trans)
+targets_updated <-  merge(time_vs_age, results_end_1, by.x = "target", by.y = "external_transcript_name")
 
 
-background <- bitr(unique(time_vs_age$target), fromType = "GENENAME",
-                   toType =  c( "ENTREZID", "SYMBOL"),
-                   OrgDb = org.Hs.eg.db)
 
+
+
+#subset to include only those from or below p.value of 0.05 and significant threshold
+time_age_filtered <- filter(targets_updated,  adj.p <= 0.05 & fcthreshold == "s")%>%
+  #remove the rows containing intercept
+  subset(!coef == "(Intercept)")
+
+
+#select the upregulated genes 
+upreg_genes <- time_age_filtered %>%
+  filter(Estimate > 0) %>%
+  select(ensembl_gene_id)
+
+#select the down_regulated genes
+downreg_genes <- time_age_filtered %>%
+  filter(Estimate < 0) %>%
+  select(ensembl_gene_id)
+
+#ont= Bp stands for biological function
+#gsea_up <- enrichGO(targets_updated$ensembl_gene_id, OrgDb = org.Hs.eg.db, 
+ #                keyType = "ENSEMBL", ont = "BP",
+ #                universe = upreg_genes$ensembl_gene_id)
+gsea_down <- enrichGO(targets_updated$ensembl_gene_id, OrgDb = org.Hs.eg.db, 
+                    keyType = "ENSEMBL", ont = "BP",
+                    universe = downreg_genes$ensembl_gene_id)
+
+gsea_up <- simplify(gsea_up, by = )
+
+dsea_up_df <- data.frame(gsea_up)
+
+
+
+background <- bitr(targets_updated$ensembl_gene_id, fromType = "ENSEMBL",
+                  toType =  c( "ENTREZID", "SYMBOL"),
+                  OrgDb = org.Hs.eg.db)
+
+
+entrez_id_up <- bitr(upreg_genes[, 1], fromType = "ENSEMBL",
+                     toType = c( "ENTREZID", "SYMBOL"),
+                     OrgDb = org.Hs.eg.db)
+
+#Biological process
+bp_up <- enrichGO(entrez_id_up[, 2], OrgDb = 'org.Hs.eg.db', 
+                  ont = "BP", 
+                  universe = background[,2], 
+                  readable = TRUE)
+
+#cellular component
+cc_up <- enrichGO(entrez_id_up[, 2], OrgDb = 'org.Hs.eg.db', 
+                  ont = "CC", 
+                  universe = background[,2], 
+                  readable = TRUE)
+
+
+#molecular function
+
+mf_up <- enrichGO(entrez_id_up[, 2], OrgDb = 'org.Hs.eg.db', 
+                  ont = "MF", 
+                  universe = background[,2], 
+                  readable = TRUE)
+
+bp_up2 <- simplify(bp_up)
+
+cc_up2 <- simplify(cc_up, cutoff = 0.7, by = "p.adjust", select_fun = min)
+mf_up2 <- simplify(mf_up, cutoff = 0.7, by = "p.adjust", select_fun = min)
+
+
+simpl.df.up <- data.frame(bp_up) %>%
+  mutate(ont = "BP") %>%
+  rbind(data.frame(cc_up) %>%
+          mutate(ont = "CC")) %>%
+  rbind(data.frame(mf_up) %>%
+          mutate(ont = "MF")) %>%
+  mutate(change = "up")
 
 
 
