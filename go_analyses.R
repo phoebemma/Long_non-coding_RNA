@@ -37,8 +37,13 @@ postExc_age <- go_list %>%
   subset(coef == "timePostExc:ageold")
 
 
+age_list <- bitr(age$external_gene_name, fromType = "SYMBOL",
+                 toType =  c( "ENTREZID", "GENENAME", "GO", "PATH"),
+                 OrgDb = org.Hs.eg.db)
 
-go_enriched <- go_enrich(age)
+
+
+go_enriched <- go_enrich(age, organismDb  = "org.Hs.eg.db", orgDb = "org.Hs.eg.db")
 
 #Get enrichment results
 results <- go_enriched$results
@@ -52,3 +57,5 @@ under_represented <- results[results$raw_p_underrep <= 0.05, ]
 
 #Genes used in enrichment
 genes_used <- go_enriched$genes
+
+
