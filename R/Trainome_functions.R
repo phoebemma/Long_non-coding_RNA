@@ -188,7 +188,7 @@ extract_rsem_isoform_counts <- function(folder){
   for(i in 1:length(files)){
     
     isoforms[[i]] <- read_Rsem_isoforms(paste0(folder,"/", files[i])) %>% 
-      mutate(file_id =gsub(".isoforms.results", "", files[i])) %>% ## This removes the file number
+      mutate(file_id =gsub("^[^_]*-",  "",gsub(".isoforms.results", "", files[i]))) %>% ## This removes the file number
       dplyr::select(transcript_id, file_id, expected_count, effective_length, length )
   }
   
