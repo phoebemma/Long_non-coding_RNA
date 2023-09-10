@@ -2,6 +2,7 @@
 .Rhistory
 .RData
 .Ruserdata
+.RDS
 
 #Evereything in the /data folder
 /data
