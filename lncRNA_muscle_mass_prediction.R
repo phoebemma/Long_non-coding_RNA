@@ -2,31 +2,77 @@ source("./libraries.R")
 source("./R/Trainome_functions.R")
 
 #This dataset cntains only pre-exercise samples and the percentage change in muscle mass post exercise
-meta_df <- readr::read_csv("./data/all_metadata_with_pct_change.csv") %>%
-  dplyr::select("participant", "sample_id", "study",
-                "sex", "age", "condition", "pct_change", "mm_rank")%>%
-  mutate(sex = factor(sex, levels = c("male", "female"))) %>%
+#meta_df <- readr::read_csv("./data/all_metadata_with_pct_change.csv") %>%
+  #dplyr::select("participant", "sample_id", "study",
+#                "sex", "age", "condition", "pct_change", "mm_rank")%>%
+#  mutate(sex = factor(sex, levels = c("male", "female"))) %>%
   
-  print()
+#  print()
 
-meta_df$sample_id[!duplicated(meta_df$sample_id), ]
+
+contratrain_meta <- readr::read_csv("./muscle_mass_rank_metadata/contratrain_baseline_with_mm.csv") %>%
+  dplyr::select(participant, sample_id, study,age, time, sex, pct_change, mm_rank) 
+#Rename the preexercise to PreExc to match the other metadataframes
+contratrain_meta$time[contratrain_meta$time == "t1"] <- "PreExc"
+
+hist(contratrain_meta$mm_rank, ylab = "Number of samples",
+     main = "Distribution of  change in muscle mass ranking in the Contratrain data",
+     xlab = "Muscle mass ranking in Contratrain data")
+hist(contratrain_meta$pct_change, ylab = "Number of samples",
+     main = "Distribution of percentage change in the Contratrain data",
+     xlab = "Percentage change in Contratrain data")
+
+
+copd_meta <- readr::read_csv("./muscle_mass_rank_metadata/copd_baseline_with_mm.csv") %>%
+  dplyr::select(participant, sample_id, study, age, time, sex, pct_change, mm_rank) 
+#The "X" in front of the sample_id is missing. To match that on the transcript data we add it
+copd_meta$sample_id <- sub("^", "X", copd_meta$sample_id)
+
+
+hist(copd_meta$pct_change,ylab = "Number of samples",
+     main = "Distribution of percentage change in the COPD data",
+     xlab = "Percentage change in COPD data" )
+hist(copd_meta$mm_rank, ylab = "Number of samples",
+     main = "Distribution of  change in muscle mass ranking in the COPD data",
+     xlab = "Muscle mass ranking in COPD data")
+
+
+vol_meta <- readr::read_csv("./muscle_mass_rank_metadata/volume_baseline_with_mm.csv") %>%
+  dplyr::select(participant, sample_id, study, age, time, sex, pct_change, mm_rank) 
+
+#Rename the preexercise to PreExc to match the other metadataframes
+vol_meta$time[vol_meta$time == "w0"] <- "PreExc"
+
+
+hist(vol_meta$pct_change,  ylab = "Number of samples",
+     main = "Distribution of percentage change in the volume data",
+     xlab = "Percentage change in Volume data")
+hist(vol_meta$mm_rank, ylab = "Number of samples",
+     main = "Distribution of  change in muscle mass ranking in the volume data",
+     xlab = "Muscle mass ranking in Volume data")
+
+
+
+metadata <- rbind(copd_meta, contratrain_meta, vol_meta)
+
+#meta_df$sample_id[!duplicated(meta_df$sample_id), ]
 
 #Load the lncRNA data
 lncRNA  <- readr::read_csv("./data/lncRNAs.csv")
 
 # Extract sample_ids that are common between lncRNAand metadata
-lncRNA_intersect <- (intersect(colnames(lncRNA), meta_df$sample_id))
+lncRNA_intersect <- (intersect(colnames(lncRNA), metadata$sample_id))
 
 
 #subsett the lncRNA data to only include the intersects
 lncRNA_data <- lncRNA %>%
   subset( select = c("transcript_name", lncRNA_intersect))%>%
   #Round counts to one significant figure
-  mutate_at(2:131, ~ as.integer(round(., 0))) %>%
+  mutate_at(2:147, ~ as.integer(round(., 0))) %>%
   print()
 colnames(lncRNA_data)
 
-meta_df <- meta_df %>%
+meta_df <- metadata %>%
   filter(sample_id %in% c(lncRNA_intersect)) %>%
   print()
 
