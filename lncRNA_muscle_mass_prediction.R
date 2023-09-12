@@ -53,7 +53,8 @@ hist(vol_meta$mm_rank, ylab = "Number of samples",
 
 
 
-metadata <- rbind(copd_meta, contratrain_meta, vol_meta)
+metadata <- rbind(copd_meta, contratrain_meta, vol_meta)%>%
+  drop_na()
 
 #meta_df$sample_id[!duplicated(meta_df$sample_id), ]
 
@@ -68,12 +69,13 @@ lncRNA_intersect <- (intersect(colnames(lncRNA), metadata$sample_id))
 lncRNA_data <- lncRNA %>%
   subset( select = c("transcript_name", lncRNA_intersect))%>%
   #Round counts to one significant figure
-  mutate_at(2:147, ~ as.integer(round(., 0))) %>%
+  mutate_at(2:146, ~ as.integer(round(., 0))) %>%
   print()
 colnames(lncRNA_data)
 
 meta_df <- metadata %>%
   filter(sample_id %in% c(lncRNA_intersect)) %>%
+  drop_na()
   print()
 
 #How many samples of each study are represented in the data
@@ -103,7 +105,7 @@ results <- seq_wrapper(fitting_fun = glmmTMB::glmmTMB,
                        subset = NULL,
                        cores = ncores)
 
-#saveRDS(results, file = "./data/muscle_mass_model.RDS")
+#saveRDS(results, file = "./data/muscle_mass_model_updated.RDS")
 
 bind_rows(results$model_summarises) %>%
   mutate(target = rep(names(results$model_summarises), each = 7)) %>%
@@ -140,3 +142,37 @@ bind_rows(results$model_summarises) %>%
   filter(coef == "mm_rank") %>%
   ggplot(aes(Pr...z..)) + geom_histogram(bins = 80) +
   ggtitle("baseline lncRNA Pvalues muscle mass rank")
+
+
+
+
+
+#Doing the fdr step
+model_df <- data.frame( bind_rows(results$model_summarises) %>%
+                          mutate(target = rep(names(results$model_summarises), each = 7))) %>%
+  #extract the adjusted p value
+  mutate(adj.p = p.adjust(Pr...z.., method = "fdr"),
+         log2fc = Estimate/log(2), 
+         fcthreshold = if_else(abs(log2fc) > 0.5, "s", "ns")) %>%
+  subset(!coef == "(Intercept)") 
+  
+mm_muscle <- model_df %>%
+  filter(coef == "mm_rank")
+
+#mm_muscle_filt <- mm_muscle %>%
+#  filter(adj.p <= 0.05 & fcthreshold == "s")
+
+mm_muscle_filt1 <- mm_muscle %>%
+  filter(Pr...z..<= 0.05)
+ggplot(mm_muscle_filt1, aes(fcthreshold)) +
+  geom_bar() +
+  ggtitle(" transcripts significant for change in muscle mass based on 1.5 logfold change and P.value of 0.05")
+  
+
+  #remove the rows containing intercept
+  
+
+
+
+
+
