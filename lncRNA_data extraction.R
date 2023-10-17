@@ -8,7 +8,7 @@ all_cpm <- data.table(readRDS("./data/cpm_values_all.RDS"), keep.rownames = T)%>
   #split the first column containing the gene 
   separate(rn, c("transcript_id", "transcript_name"), sep = "_", extra = "merge") %>%
   #drop transcript_id
-  select (-(transcript_id))
+  dplyr::select (-(transcript_id))
 
 #loadinf ensembl attributes as I would be using them to annotate the genes in the dataset.
 #I am picking the gene_id, gene_name and gene biotypes and matching them to the listed genes in my dataset
@@ -24,6 +24,11 @@ all_cpm_with_annotation <- merge(all_cpm, results_end_1, by.x = "transcript_name
 #list all the biotypes in the dataset
 unique(all_cpm_with_annotation$transcript_biotype)
 
+#extract and save the protein_coding transcripts
+
+protein_coding <- filter(all_cpm_with_annotation, transcript_biotype == "protein_coding")
+
+#write_csv(protein_coding, "./data/protein_coding_transcripts.csv")
 
 #Extracting from the dataframe only the genes with biotype "lncRNA"
 lncRNA <- filter(all_cpm_with_annotation, transcript_biotype == "lncRNA")

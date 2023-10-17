@@ -30,7 +30,7 @@ lncRNA_intersect <- (intersect(colnames(lncRNA), metadata$sample_id))
 lncRNA_data <- lncRNA %>%
   subset( select = c("transcript_name", lncRNA_intersect))%>%
   #Round counts to one significant figure
-  mutate_at(2:356, ~ as.integer(round(., 0))) %>%
+  mutate_at(2:544, ~ as.integer(round(., 0))) %>%
   print()
 colnames(lncRNA_data)
   
@@ -69,10 +69,10 @@ transcript <- lncRNA_data %>%
 
 
 
-args<- list(formula = y ~  time  + age + age:time + sex + sex:time + (1|participant),
+args<- list(formula = y ~  time  + age:time + sex:time + (1|participant),
                        family = glmmTMB::nbinom2())
                      
-ncores <- parallel::detectCores()
+
 
 
 
@@ -92,7 +92,7 @@ results <- seq_wrapper(fitting_fun = glmmTMB::glmmTMB,
 summary(results) 
 
 #save the result
-saveRDS(results, file = "./data/lncRNA_model.RDS")
+#saveRDS(results, file = "./data/lncRNA_model.RDS")
 
 
 results <- readRDS("./data/lncRNA_model.RDS")
@@ -110,27 +110,85 @@ comparisons(results$model_fits[[1]], vcov = FALSE,
             type = "response")
 
 
+###Visualizing the datasets
 
 
- library(dplyr)
+bind_rows(results$model_summarises) %>%
+  mutate(target = rep(names(results$model_summarises), each = 9)) %>%
+  filter(coef == "timeMidExc") %>%
+  ggplot(aes(Pr...z..)) + geom_histogram(bins = 80) +
+  ggtitle("Pvalues time(MidExc)")+
+  theme(axis.text = element_text(size = 15), text = element_text(size = 15),
+        plot.title = element_text(hjust = 0.5))
 
 
-x <- results%>%
-  dplyr::select(gene, method, coef, estimate, p.val)
+ 
+
+
+bind_rows(results$model_summarises) %>%
+  mutate(target = rep(names(results$model_summarises), each = 9)) %>%
+  filter(coef == "timePostExc") %>%
+  ggplot(aes(Pr...z..)) + geom_histogram(bins = 80) +
+  ggtitle("Pvalues time(PostExc)")+
+  theme(axis.text = element_text(size = 15), text = element_text(size = 15),
+        plot.title = element_text(hjust = 0.5))
+
+
+
+
+
+bind_rows(results$model_summarises) %>%
+  mutate(target = rep(names(results$model_summarises), each = 9)) %>%
+  filter(coef == "timePostExc:ageold") %>%
+  ggplot(aes(Pr...z..)) + geom_histogram(bins = 80) +
+  ggtitle("Pvalues time(timePostExc:ageold)")+
+  theme(axis.text = element_text(size = 15), text = element_text(size = 15),
+        plot.title = element_text(hjust = 0.5))
+
+
+
+
+
+bind_rows(results$model_summarises) %>%
+  mutate(target = rep(names(results$model_summarises), each = 9)) %>%
+  filter(coef == "timePostExc:sexfemale") %>%
+  ggplot(aes(Pr...z..)) + geom_histogram(bins = 80) +
+  ggtitle("Pvalues time(timePostExc:sexfemale)")+
+  theme(axis.text = element_text(size = 15), text = element_text(size = 15),
+        plot.title = element_text(hjust = 0.5))
+
+
+
+
+
+
+# 
+# x <- results%>%
+#   dplyr::select(gene, method, coef, estimate, p.val)
 
 
 #Plot the values for time and age
-time_vs_age <- data.frame( bind_rows(results$model_summarises) %>%
+all_coefs_df <- data.frame( bind_rows(results$model_summarises) %>%
   mutate(target = rep(names(results$model_summarises), each = 9))) %>%
   #filter(coef == "timePostExc:ageold")) %>%
   mutate(adj.p = p.adjust(Pr...z.., method = "fdr"),
          log2fc = Estimate/log(2), 
-         fcthreshold = if_else(abs(log2fc) > 0.5, "s", "ns")) #%>%
+         fcthreshold = if_else(abs(log2fc) > 0.5, "s", "ns")) %>%
+  #remove the rows containing intercept
+  subset(!coef == "(Intercept)")%>%
   # ~ 1.4 fold change
   #subset to include only those from or below p.value of 0.05 and significant threshold
-time_age_filtered <- filter(time_vs_age,  adj.p <= 0.05 & fcthreshold == "s")%>%
-  #remove the rows containing intercept
-  subset(!coef == "(Intercept)")
+  filter( Pr...z.. <= 0.05 & fcthreshold == "s")
+
+
+#check the distribution of the coefficients
+table(all_coefs_df$coef)
+
+
+
+
+
+
 
 
 #get the ensemble gene IDs as gsea doesnt seem to work with transcript names

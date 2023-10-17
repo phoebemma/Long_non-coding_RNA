@@ -1,6 +1,6 @@
 #if (!require("BiocManager", quietly = TRUE))
  # install.packages("Homo.sapiens")
-#BiocManager::install("ensembldb");
+BiocManager::install("annotables");
 #source("https://horvath.genetics.ucla.edu/html/CoexpressionNetwork/GeneAnnotation/installAnRichment.R");
 #installAnRichment();
 
@@ -44,7 +44,9 @@ library(clusterProfiler)
 library(GOfuncR)
 
 library(Homo.sapiens)
-#library(EnsDb.Hsapiens.v86)
-
+library(topGO)
+library(KEGGREST)
+library(DGCA)
+library(Hmisc)
 
 

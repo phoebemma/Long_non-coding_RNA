@@ -66,10 +66,10 @@ transcript <- lncRNA_data %>%
 
 
 
-args<- list(formula = y ~  age  + sex  + age:sex +(1|participant),
+
+args<- list(formula = y ~  age  + sex  +(1|participant),
             family = glmmTMB::nbinom2())
 
-ncores <- parallel::detectCores()
 
 
 
@@ -90,36 +90,40 @@ results <- seq_wrapper(fitting_fun = glmmTMB::glmmTMB,
 
 
 
-
 bind_rows(results$model_summarises) %>%
-  mutate(target = rep(names(results$model_summarises), each = 4)) %>%
+  mutate(target = rep(names(results$model_summarises), each = 3)) %>%
   filter(coef == "ageold") %>%
   ggplot(aes(Pr...z..)) + geom_histogram(bins = 80) +
-  ggtitle("baseline lncRNA Pvalues age")
+  ggtitle("baseline lncRNA Pvalues age")+
+  theme(axis.text = element_text(size = 15), text = element_text(size = 15),
+        plot.title = element_text(hjust = 0.5))
+
 
 
 
 bind_rows(results$model_summarises) %>%
-  mutate(target = rep(names(results$model_summarises), each = 4)) %>%
+  mutate(target = rep(names(results$model_summarises), each = 3)) %>%
   filter(coef == "sexfemale") %>%
   ggplot(aes(Pr...z..)) + geom_histogram(bins = 80) +
-  ggtitle("baseline lncRNA Pvalues sex")
-
-
-
-
-bind_rows(results$model_summarises) %>%
-  mutate(target = rep(names(results$model_summarises), each = 4)) %>%
-  filter(coef == "ageold:sexfemale") %>%
-  ggplot(aes(Pr...z..)) + geom_histogram(bins = 80) +
-  ggtitle("baseline lncRNA Pvalues age on sex")
+  ggtitle("baseline lncRNA Pvalues sex")+
+  theme(axis.text = element_text(size = 15), text = element_text(size = 15),
+        plot.title = element_text(hjust = 0.5))
 
 
 
 
 
+# bind_rows(results$model_summarises) %>%
+#   mutate(target = rep(names(results$model_summarises), each = 4)) %>%
+#   filter(coef == "ageold:sexfemale") %>%
+#   ggplot(aes(Pr...z..)) + geom_histogram(bins = 80) +
+#   ggtitle("baseline lncRNA Pvalues age on sex")
 
 
 
-summary(results) 
+
+
+
+
+
 

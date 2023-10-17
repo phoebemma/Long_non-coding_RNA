@@ -1,5 +1,5 @@
 
-
+ncores <- parallel::detectCores()
 
 sum_fun <- function(x){
   
