@@ -19,9 +19,6 @@ model_df <- data.frame( bind_rows(model$model_summarises) %>%
 
 
 
-
-
-
 #subset to include only those from or below p.value of 0.05 and significant threshold
 #model_df_filtered <- filter(model_df,  adj.p <= 0.05 & fcthreshold == "s")%>%
   #remove the rows containing intercept

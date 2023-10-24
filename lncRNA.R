@@ -14,14 +14,15 @@ lncRNA <- readr::read_csv("./data/lncRNAs.csv") #%>%
 
 metadata <- readr::read_csv("./data/all_metadata.csv") %>%
   #drop the "MidExc rows 
-  #subset(time != "MidExc") %>%
-  mutate(time = factor(time, levels = c("PreExc", "MidExc",   "PostExc")), 
+  subset(time != "MidExc") %>%
+  mutate(time = factor(time, levels = c("PreExc",    "PostExc")), 
          age = factor(age, levels = c("young", "old")), 
          sex = factor(sex, levels = c("male", "female"))) %>%
   
   print()
   
   
+
 # Extract sample_ids that are common between lncRNAand metadata
 lncRNA_intersect <- (intersect(colnames(lncRNA), metadata$sample_id))
   
@@ -30,7 +31,7 @@ lncRNA_intersect <- (intersect(colnames(lncRNA), metadata$sample_id))
 lncRNA_data <- lncRNA %>%
   subset( select = c("transcript_name", lncRNA_intersect))%>%
   #Round counts to one significant figure
-  mutate_at(2:544, ~ as.integer(round(., 0))) %>%
+  mutate_at(2:356, ~ as.integer(round(., 0))) %>%
   print()
 colnames(lncRNA_data)
   
@@ -69,7 +70,7 @@ transcript <- lncRNA_data %>%
 
 
 
-args<- list(formula = y ~  time  + age:time + sex:time + (1|participant),
+args<- list(formula = y ~  time  + age:time + (1|participant),
                        family = glmmTMB::nbinom2())
                      
 
@@ -101,6 +102,63 @@ results <- readRDS("./data/lncRNA_model.RDS")
             #newdata = datagrid(sex = "female")
            # )
 
+
+
+
+model_eval_df <- bind_rows(results$model_evaluations) %>%
+  mutate(target = names(results$model_evaluations))
+
+
+
+model_sum_df <- bind_rows(results$model_summarises) %>%
+  mutate(target = rep(names(results$model_summarises), each = 4))%>%
+  subset(!coef == "(Intercept)") %>%
+  mutate(adj.p = p.adjust(Pr...z.., method = "fdr"),
+         log2fc = Estimate/log(2),
+         
+         fcthreshold = if_else(abs(log2fc) > 0.5, "s", "ns"))
+
+
+
+
+#merge the model summaries and model evaluation into one dataframe
+model_results <- merge(model_sum_df, model_eval_df, by = "target")
+
+
+
+
+#check those that pass model summary and evaluation characteristics
+model_filtered <- model_results %>% filter(Pr...z.. <= 0.05 & fcthreshold == "s" & pval.disp >= 0.5 & pval.unif >= 0.5)%>%
+  print()
+
+
+
+ #saveRDS(model_filtered, "./data/filtered_all_transcripts.RDS")
+
+plot( table(model_filtered$coef))
+
+
+unique(model_filtered$target)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
                         
 
 comparisons(results$model_fits[[1]], vcov = FALSE,
@@ -113,23 +171,51 @@ comparisons(results$model_fits[[1]], vcov = FALSE,
 ###Visualizing the datasets
 
 
-bind_rows(results$model_summarises) %>%
-  mutate(target = rep(names(results$model_summarises), each = 9)) %>%
-  filter(coef == "timeMidExc") %>%
-  ggplot(aes(Pr...z..)) + geom_histogram(bins = 80) +
-  ggtitle("Pvalues time(MidExc)")+
-  theme(axis.text = element_text(size = 15), text = element_text(size = 15),
-        plot.title = element_text(hjust = 0.5))
+
+
+bind_rows(results$model_evaluations) %>%
+  mutate(target = names(results$model_evaluations)) %>%
+  #print()
+  
+  #dplyr::filter(pval.unif < 0.05)%>%
+  
+  
+  ggplot(aes(pval.unif)) + geom_histogram()
+print()
+
+
+
+#A pval.zinfl value < 1 means that the observed data has less zeros than expected,
+#a value > 1 means that it has more zeros than expected
+# 
+
+
+
+
+# Instead of rejecting the null hypothesis based on a single p-value less than 5% significance level,
+# this method compares an empirical probability distribution of p-values to a uniform distribution.
+# Hence, this method entails a larger sample and naturally produces relatively reliable results.
+# 
+
+## Problem is, this is a simulated result
+
+# bind_rows(results$model_summarises) %>%
+#   mutate(target = rep(names(results$model_summarises), each = 9)) %>%
+#   filter(coef == "timeMidExc") %>%
+#   ggplot(aes(Pr...z..)) + geom_histogram(bins = 80) +
+#   ggtitle("Pvalues time(MidExc)")+
+#   theme(axis.text = element_text(size = 15), text = element_text(size = 15),
+#         plot.title = element_text(hjust = 0.5))
 
 
  
 
 
 bind_rows(results$model_summarises) %>%
-  mutate(target = rep(names(results$model_summarises), each = 9)) %>%
+  mutate(target = rep(names(results$model_summarises), each = 4)) %>%
   filter(coef == "timePostExc") %>%
   ggplot(aes(Pr...z..)) + geom_histogram(bins = 80) +
-  ggtitle("Pvalues time(PostExc)")+
+  ggtitle("Pvalues time in full dataset")+
   theme(axis.text = element_text(size = 15), text = element_text(size = 15),
         plot.title = element_text(hjust = 0.5))
 
@@ -138,10 +224,10 @@ bind_rows(results$model_summarises) %>%
 
 
 bind_rows(results$model_summarises) %>%
-  mutate(target = rep(names(results$model_summarises), each = 9)) %>%
+  mutate(target = rep(names(results$model_summarises), each = 4)) %>%
   filter(coef == "timePostExc:ageold") %>%
   ggplot(aes(Pr...z..)) + geom_histogram(bins = 80) +
-  ggtitle("Pvalues time(timePostExc:ageold)")+
+  ggtitle("Pvalues interaction time with age (timePostExc:ageold)")+
   theme(axis.text = element_text(size = 15), text = element_text(size = 15),
         plot.title = element_text(hjust = 0.5))
 
@@ -150,10 +236,10 @@ bind_rows(results$model_summarises) %>%
 
 
 bind_rows(results$model_summarises) %>%
-  mutate(target = rep(names(results$model_summarises), each = 9)) %>%
-  filter(coef == "timePostExc:sexfemale") %>%
+  mutate(target = rep(names(results$model_summarises), each = 4)) %>%
+  filter(coef == "timePreExc:ageold") %>%
   ggplot(aes(Pr...z..)) + geom_histogram(bins = 80) +
-  ggtitle("Pvalues time(timePostExc:sexfemale)")+
+  ggtitle("Pvalues interaction time with age (timePreExc:ageold)")+
   theme(axis.text = element_text(size = 15), text = element_text(size = 15),
         plot.title = element_text(hjust = 0.5))
 
@@ -169,7 +255,7 @@ bind_rows(results$model_summarises) %>%
 
 #Plot the values for time and age
 all_coefs_df <- data.frame( bind_rows(results$model_summarises) %>%
-  mutate(target = rep(names(results$model_summarises), each = 9))) %>%
+  mutate(target = rep(names(results$model_summarises), each = 4))) %>%
   #filter(coef == "timePostExc:ageold")) %>%
   mutate(adj.p = p.adjust(Pr...z.., method = "fdr"),
          log2fc = Estimate/log(2), 
@@ -183,6 +269,30 @@ all_coefs_df <- data.frame( bind_rows(results$model_summarises) %>%
 
 #check the distribution of the coefficients
 table(all_coefs_df$coef)
+
+#Extract the different coefficients into different dataframse
+
+time_df <- all_coefs_df %>%
+  filter(coef == "timePostExc")
+
+#extract the interaction between preexercise and age
+preExc_age <- all_coefs_df %>%
+  filter(coef== "timePreExc:ageold")
+
+
+postExc_age <- all_coefs_df %>%
+  filter(coef == "timePostExc:ageold")
+
+
+
+#save them in a subfolder of the data folder
+
+#saveRDS(time_df, file = "./data/significant_coefs-from_model/significant_lncrnas_time.RDS")
+
+#saveRDS(preExc_age, file = "./data/significant_coefs-from_model/significant_lncrnas_PreExc_age.RDS")
+
+#saveRDS(postExc_age, file = "./data/significant_coefs-from_model/significant_lncrnas_PostExc_age.RDS")
+
 
 
 

@@ -17,9 +17,9 @@ eval_mod <- function(x) {
   
   sim <- DHARMa::simulateResiduals(x, n = 1000)
   
-  disp <- DHARMa::testDispersion(sim, plot = FALSE)
-  unif <- DHARMa::testUniformity(sim, plot = FALSE)
-  zinfl <- DHARMa::testZeroInflation(sim, plot = FALSE)
+  disp <- DHARMa::testDispersion(sim, plot = FALSE) #tests if the simulated dispersion is equal to the observed dispersion
+  unif <- DHARMa::testUniformity(sim, plot = FALSE) # tests if the overall distribution conforms to expectations
+  zinfl <- DHARMa::testZeroInflation(sim, plot = FALSE) #tests if there are more zeros in the data than expected from the simulations
   
   results <- data.frame(pval.disp = disp$p.value, 
                         pval.unif = unif$p.value, 

@@ -67,7 +67,7 @@ transcript <- lncRNA_data %>%
 
 
 
-args<- list(formula = y ~  age  + sex  +(1|participant),
+args<- list(formula = y ~  age + sex+ age:sex + (1|participant),
             family = glmmTMB::nbinom2())
 
 
@@ -90,8 +90,67 @@ results <- seq_wrapper(fitting_fun = glmmTMB::glmmTMB,
 
 
 
+
+
+
+
+
+#check uniformity
+
+model_eval_df <- bind_rows(results$model_evaluations) %>%
+  mutate(target = names(results$model_evaluations)) #%>%
+  #print()
+  
+  #dplyr::filter(pval.unif < 0.05)%>%
+  
+  
+#   ggplot(aes(pval.unif)) + geom_histogram()
+# print()
+# 
+#   
+#   
+#   ggplot(aes(pval.disp)) + geom_histogram()
+#   
+#   
+#   ggplot(aes(pval.zinfl)) + geom_histogram()
+
+
+model_sum_df <- bind_rows(results$model_summarises) %>%
+  mutate(target = rep(names(results$model_summarises), each = 4))%>%
+  subset(!coef == "(Intercept)") %>%
+  mutate(adj.p = p.adjust(Pr...z.., method = "fdr"),
+                                         log2fc = Estimate/log(2),
+         
+                                         fcthreshold = if_else(abs(log2fc) > 0.5, "s", "ns")) #%>%
+
+
+
+
+#merge the model summaries and model evaluation into one dataframe
+ model_results <- merge(model_sum_df, model_eval_df, by = "target")
+
+
+ 
+ 
+ #check those that pass model summary and evaluation characteristics
+ model_filtered <- model_results %>% filter(Pr...z.. <= 0.05 & fcthreshold == "s" & pval.disp >= 0.5 & pval.unif >= 0.5)%>%
+   print()
+
+ 
+#saveRDS(model_filtered, "./data/filtered_baseline_transcripts.RDS")
+ 
+plot( table(model_filtered$coef))
+
+ 
+ 
+ 
+ # Both pval.disp and pval.unif should be above 0.5 if you the a correct model
+
+
+
+
 bind_rows(results$model_summarises) %>%
-  mutate(target = rep(names(results$model_summarises), each = 3)) %>%
+  mutate(target = rep(names(results$model_summarises), each = 4)) %>%
   filter(coef == "ageold") %>%
   ggplot(aes(Pr...z..)) + geom_histogram(bins = 80) +
   ggtitle("baseline lncRNA Pvalues age")+
@@ -121,6 +180,22 @@ bind_rows(results$model_summarises) %>%
 
 
 
+
+### These data are problematic for the distribution
+temp_df <- lncRNA_data %>%
+  dplyr::filter(transcript_name == "ARHGAP27P1-BPTFP1-KPNA2P3-201") %>%
+  pivot_longer(-transcript_name, names_to = "sample_id") %>%
+  
+  #mutate(zero_one = if_else(value == 0, 1, 0)) %>%
+  
+  
+  left_join(meta_df) %>%
+  print()
+
+
+
+temp_df %>%  
+  ggplot(aes(value)) + geom_histogram() + facet_grid(study ~ sex)
 
 
 

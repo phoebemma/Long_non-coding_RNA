@@ -1,0 +1,70 @@
+---
+title: "Exploration and correlation analyses of diff expressed lncRNA"
+format: html
+editor: visual
+---
+
+## Description
+
+The transcripts that made the cut in both the model from baseline data (predicting impact of age and sex) and the model from the full dataset predicting impact of time are explored in this file
+
+## Baseline model
+
+This mode was built using the baseline data (Pre exercise) and the following arguement "args\<- list(formula = y \~ age + sex+ age:sex + (1\|participant),
+
+family = glmmTMB::nbinom2())" keyed into the Seq_Wrapper. Following model summary and evaluation, the transcripts that fulfilled the following conditions were filtered and saved .
+
+\*(Pr...z.. \<= 0.05 & fcthreshold == "s" & pval.disp \>= 0.5 & pval.unif \>= 0.5)\*
+
+where "Pr...z.." is the p value of the prediction,
+
+"fcthreshold " the log fold 2 estimate ; designated as significant (s) or not significant (ns) if the value is less than 0.5, o above respectively
+
+"pval.disp" is the pvalue of the evaluation of dispersion using the testDispersion () function of DHarma
+
+"pval. unif" is the pvalue of the eveluation of data uniformity using the testUniformity(9 function in DHarma.
+
+```{r , echo=F}
+source("./libraries.R")
+source("./R/Trainome_functions.R")
+```
+
+```{r, load the differentially expressed lncRNAs}
+base_df <- readRDS("./data/filtered_baseline_transcripts.RDS")
+base_df
+```
+
+Load the baseline lncRNA dataframe and extract the values of the transcripts of interest from it
+
+```{r}
+#| echo: false
+baseline_lncRNAs <- readRDS("./data/baseline_lncRNAs.RDS")
+
+)
+
+#extract the intersect from the transcripts of interest
+baseline_lncRNAs <- baseline_lncRNAs[baseline_lncRNAs$transcript_name %in% base_df$target, ]
+
+
+```
+
+The `echo: false` option disables the printing of code (only output is displayed).
+
+### Load protein coding data
+
+This will be used for gene correlation analyses
+
+```{r}
+#| echo: False
+#Load the protein coding transcripts
+
+protein_coding <- readr::read_csv("./data/protein_coding_transcripts.csv")
+
+# Extract sample_ids that are common between lncRNAand protein_coding
+corr_intersect <- (intersect(colnames(baseline_lncRNAs), colnames(protein_coding)))
+
+#extract the intersect from the protein coding data
+protein_coding <- protein_coding %>%
+  subset( select = ( corr_intersect))
+
+```
