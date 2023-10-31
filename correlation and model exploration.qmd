@@ -98,9 +98,9 @@ Calculate the correlation coefficients and p value for each lncRNA and protein-c
 
 
 
-test_baseline <- baseline_lncRNAs[1:50,]
-test_protein <- protein_coding[1:100,]
-
+# test_baseline <- baseline_lncRNAs[1:50,]
+# test_protein <- protein_coding[1:100,]
+# 
 
 
 
@@ -114,38 +114,38 @@ bind_rows(cor_results_i)
 ```{r}
 #| echo: False
 
-cor_results_j <-list()
-cor_results_i <- list()
-
-for (i in 1:length(test_baseline$transcript_name)){
-  
-  
-  for (j in 1:length(test_protein$transcript_name)){
-  
-    lncRNA_Vector <- as.numeric(test_baseline[i,-1])
-    protein_coding_vector <- as.numeric(test_protein[j,-1 ])
-  
-    cor_test_result <- cor.test(lncRNA_Vector, protein_coding_vector)
-  # cor_results <- do.call(rbind.data.frame(cor_test_result))
-   
-     cor_results_j[[j]] <- data.frame(
-       lncRNA = as.character(test_baseline[i,1]),
-       protein_coding_gene = as.character(test_protein[j, 1]),
-       correlation_coefficient = cor_test_result$estimate,
-       p_value = cor_test_result$p.value, 
-       row.names = NULL)
-    
- 
-   
-  } 
-  
-cor_results_i[[i]] <-  bind_rows(cor_results_j)
-  
-}
-
-
-bind_rows(cor_results_i) #%>%
-  ggplot(aes(correlation_coefficient)) + geom_histogram()
+# cor_results_j <-list()
+# cor_results_i <- list()
+# 
+# for (i in 1:length(test_baseline$transcript_name)){
+#   
+#   
+#   for (j in 1:length(test_protein$transcript_name)){
+#   
+#     lncRNA_Vector <- as.numeric(test_baseline[i,-1])
+#     protein_coding_vector <- as.numeric(test_protein[j,-1 ])
+#   
+#     cor_test_result <- cor.test(lncRNA_Vector, protein_coding_vector)
+#   # cor_results <- do.call(rbind.data.frame(cor_test_result))
+#    
+#      cor_results_j[[j]] <- data.frame(
+#        lncRNA = as.character(test_baseline[i,1]),
+#        protein_coding_gene = as.character(test_protein[j, 1]),
+#        correlation_coefficient = cor_test_result$estimate,
+#        p_value = cor_test_result$p.value, 
+#        row.names = NULL)
+#     
+#  
+#    
+#   } 
+#   
+# cor_results_i[[i]] <-  bind_rows(cor_results_j)
+#   
+# }
+# 
+# 
+# bind_rows(cor_results_i) #%>%
+#   ggplot(aes(correlation_coefficient)) + geom_histogram()
 
 ```
 
@@ -190,8 +190,20 @@ correlation_results <- bind_rows(cor_results_i) #%>%
 ```{r}
 #saveRDS(correlation_results, file = "./data/Correlation_results.RDS")
 correlation_results %>%
-  ggplot(aes(p_value)) + geom_histogram()
+  round_df(3) %>%
+  ggplot(aes(y = p_value, x = correlation_coefficient)) + geom_point()+
+  ggtitle("Distribution of correlation coefficients by p values of the relationships between lncRNAs and protein coding genes") +
+  theme(axis.text = element_text(size = 15), text = element_text(size = 15))
 
+
+```
+
+Filter the subsets with pvalues of 0.05 or less
+
+```{r}
+significant_corr <- correlation_results %>% filter(p_value <= 0.05)
+
+#saveRDS(significant_corr, file = "./data/Correlation_results_of_significance.RDS")
 ```
 
 ```{r}
@@ -219,6 +231,6 @@ correlation_results %>%
 ```
 
 ```{r}
-cor_test_result$estimate
+#cor_test_result$estimate
 
 ```
