@@ -308,3 +308,15 @@ extract_splice_q <- function(folder){
   return(data.frame(comb.df))
 }
 
+
+
+#Function to round all floating numbers to two decimal places
+
+round_df <- function(x, digits) {
+ 
+  numeric_columns <- sapply(x, mode) == 'numeric'
+  x[numeric_columns] <-  round(x[numeric_columns], digits)
+  x
+}
+
+
