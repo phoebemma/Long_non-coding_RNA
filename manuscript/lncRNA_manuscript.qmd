@@ -1,0 +1,41 @@
+---
+title: "Long non coding RNAs are differentially expressed by age and exercise"
+format: html
+editor: visual
+bibliography: references.bib
+---
+
+### Tentative Journals
+
+https://www.sciencedirect.com/journal/mechanisms-of-ageing-and-development Level 1
+
+https://rnajournal.cshlp.org/ Level 2
+
+## Abstract
+
+Only few long non-coding RNAs have been functionally annotated. We hope to determine age-associated patterns in lmcRNA from human skeletal muscle (*vastus lateralis*)
+
+## Introduction
+
+Genes can be broadly grouped into protein-coding and non-protein-coding genes. Among the non-protein-coding genes are are those described as "long non-coding RNA" genes typically made up of 200 nucleotides or more @ali2020 @marttila2020 and ere expressed at a much lower level lever compared to proteinc coding genes. They are tissue specific @ali2020 and show spatio temporal expression patterns @marttila2020. They are said to have an ability to intereact with DNA, RNA or protein . They regulate splicing, mRNA/protein stability and protein subcellular localization @he2019. Certain lncRNAs have been said to play roles in oncogenesis @he2019, in cardiovascular diseases @bink2019, type 2 diabetes @he2017
+
+Previous studies have linked aging to expression patterns of certain lncRNAs @marttila2020 @bink2019
+
+## 2. Materials and Methods
+
+2.1 Data source
+
+The data used in this study were obtained from the TrainOme group and consisted of RNA Sequence and metadata from three independent Resistance exercise studies all targetted at the *vastus lateralis* muscle
+
+```{r}
+1 + 1
+```
+
+You can add options to executable code like this
+
+```{r}
+#| echo: false
+2 * 2
+```
+
+The `echo: false` option disables the printing of code (only output is displayed).

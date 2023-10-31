@@ -35,6 +35,8 @@ lncRNA_data <- lncRNA %>%
 colnames(lncRNA_data)
 
 
+#saveRDS(lncRNA_data, "./data/baseline_lncRNAs.RDS")
+
 #extract genes with zero counts in all rows 
 #non_zero_counts <- rowSums(lncRNA_data[, -1]) > 0
 
@@ -88,7 +90,9 @@ results <- seq_wrapper(fitting_fun = glmmTMB::glmmTMB,
 
 #saveRDS(results, file = "./data/baseline_model.RDS")
 
+#Load the baseline results data
 
+results <- readRDS("./data/baseline_model.RDS")
 
 
 
@@ -133,11 +137,11 @@ model_sum_df <- bind_rows(results$model_summarises) %>%
  
  
  #check those that pass model summary and evaluation characteristics
- model_filtered <- model_results %>% filter(Pr...z.. <= 0.05 & fcthreshold == "s" & pval.disp >= 0.5 & pval.unif >= 0.5)%>%
+ model_filtered <- model_results %>% filter(Pr...z.. <= 0.05 & fcthreshold == "s" & pval.disp >= 0.05 & pval.unif >= 0.05)%>%
    print()
 
  
-#saveRDS(model_filtered, "./data/filtered_baseline_transcripts.RDS")
+saveRDS(model_filtered, "./data/filtered_baseline_transcripts.RDS")
  
 plot( table(model_filtered$coef))
 
@@ -161,12 +165,24 @@ bind_rows(results$model_summarises) %>%
 
 
 bind_rows(results$model_summarises) %>%
-  mutate(target = rep(names(results$model_summarises), each = 3)) %>%
+  mutate(target = rep(names(results$model_summarises), each = 4)) %>%
   filter(coef == "sexfemale") %>%
   ggplot(aes(Pr...z..)) + geom_histogram(bins = 80) +
   ggtitle("baseline lncRNA Pvalues sex")+
   theme(axis.text = element_text(size = 15), text = element_text(size = 15),
         plot.title = element_text(hjust = 0.5))
+
+
+
+
+bind_rows(results$model_summarises) %>%
+  mutate(target = rep(names(results$model_summarises), each = 4)) %>%
+  filter(coef == "ageold:sexfemale") %>%
+  ggplot(aes(Pr...z..)) + geom_histogram(bins = 80) +
+  ggtitle("baseline lncRNA Pvalues sex")+
+  theme(axis.text = element_text(size = 15), text = element_text(size = 15),
+        plot.title = element_text(hjust = 0.5))
+
 
 
 

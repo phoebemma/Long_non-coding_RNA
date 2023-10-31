@@ -13,7 +13,8 @@ protein_coding <- readr::read_csv("./data/protein_coding_transcripts.csv")
 
 #load the filtered lncRNA data of significance
 
-lncRNA_data <- readr::read_csv("./data/PreExc_lncRNA.csv")
+lncRNA_data <- readr::read_csv("./data/PreExc_lncRNA.csv")%>%
+  print()
 
 #since this is just the preexercise data, we have to extract the intersect of both
 #that is column names present in both dataframes
