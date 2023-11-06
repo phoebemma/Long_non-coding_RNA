@@ -1,5 +1,5 @@
 ---
-title: "Long non coding RNAs are differentially expressed by age and exercise"
+title: "Ageing and resistance exercise associated changes in lncRNA expression in the human skeletal muscle"
 format: html
 editor: visual
 bibliography: references.bib
@@ -13,19 +13,27 @@ https://rnajournal.cshlp.org/ Level 2
 
 ## Abstract
 
-Only few long non-coding RNAs have been functionally annotated. We hope to determine age-associated patterns in lmcRNA from human skeletal muscle (*vastus lateralis*)
+Only few long non-coding RNAs have been functionally annotated. We hope to determine age-associated patterns in lmcRNA from human skeletal muscle (*vastus lateralis*). Previous studies had looked at the expression patterns of genes as relate to age and resistance exercise. It is even more easier as protein coding genes are functionally annotated as compared to their non-protein coding counterparts.
+
+We looked at lncRNAs expression at the transcript level and tried to assign functions to them based on co-expressed protein-coding transcripts of the same datasets.
 
 ## Introduction
 
-Genes can be broadly grouped into protein-coding and non-protein-coding genes. Among the non-protein-coding genes are are those described as "long non-coding RNA" genes typically made up of 200 nucleotides or more @ali2020 @marttila2020 and ere expressed at a much lower level lever compared to proteinc coding genes. They are tissue specific @ali2020 and show spatio temporal expression patterns @marttila2020. They are said to have an ability to intereact with DNA, RNA or protein . They regulate splicing, mRNA/protein stability and protein subcellular localization @he2019. Certain lncRNAs have been said to play roles in oncogenesis @he2019, in cardiovascular diseases @bink2019, type 2 diabetes @he2017
+Genes can be broadly grouped into protein-coding and non-protein-coding genes. Among the non-protein-coding genes are are those described as "long non-coding RNA" genes typically made up of 200 nucleotides or more @ali2020 @marttila2020 and ere expressed at a much lower level lever compared to proteinc coding genes. They contain no functional open reading frame @sabbirahmed2021 .They are tissue specific @ali2020 and show spatio temporal expression patterns @marttila2020. They are said to have an ability to intereact with DNA, RNA or protein . They regulate splicing, mRNA/protein stability and protein subcellular localization @he2019. Certain lncRNAs have been said to play roles in oncogenesis @he2019, in cardiovascular diseases @bink2019, type 2 diabetes @he2017.
+
+lncRNA expression shows a cell and tissue specific expression, thus suggesting they are under transcriptional control @sabbirahmed2021 @marttila2020
 
 Previous studies have linked aging to expression patterns of certain lncRNAs @marttila2020 @bink2019
+
+Lifestyle therapy using resistance exercise can counteract age-related health issues especially as they relate to loss in muscle health and function @mølmen2021
 
 ## 2. Materials and Methods
 
 2.1 Data source
 
-The data used in this study were obtained from the TrainOme group and consisted of RNA Sequence and metadata from three independent Resistance exercise studies all targetted at the *vastus lateralis* muscle
+The data used in this study were obtained from the TrainOme group and consisted of RNA Sequence and metadata from three independent Resistance exercise studies all targetted at the *vastus lateralis* muscle. Briefly, the Volume study from @hammarström2020, the COPD study from @mølmen2021 and ContraTrain study from \*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
+
+The data consists of RNA-Seq from the *vastus lateralis* muscle of individuals before commencement of the resistance exercise studies (Pre Exercise) and at the end of the studies (Post Exercise)
 
 ```{r}
 1 + 1

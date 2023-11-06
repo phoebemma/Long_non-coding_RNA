@@ -1,8 +1,10 @@
 #if (!require("BiocManager", quietly = TRUE))
  # install.packages("Homo.sapiens")
-BiocManager::install("annotables");
+#BiocManager::install("annotables");
 #source("https://horvath.genetics.ucla.edu/html/CoexpressionNetwork/GeneAnnotation/installAnRichment.R");
 #installAnRichment();
+#BiocManager::install("Bioconductor/BiocFileCache")
+
 
 library(tidyverse)
 library(dplyr)
@@ -42,11 +44,15 @@ library(DHARMa)
 library(marginaleffects)
 library(clusterProfiler)
 library(GOfuncR)
+library(AnnotationHub)
+library(ensembldb)
+library(annotables)
 
 library(Homo.sapiens)
 library(topGO)
 library(KEGGREST)
 library(DGCA)
 library(Hmisc)
+library(igraph)
 
 
