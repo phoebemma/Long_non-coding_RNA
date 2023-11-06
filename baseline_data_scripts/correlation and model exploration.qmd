@@ -1,0 +1,241 @@
+---
+title: "Exploration and correlation analyses of diff expressed lncRNA"
+format: html
+editor: visual
+editor_options: 
+  chunk_output_type: console
+---
+
+## Description
+
+The transcripts that made the cut in both the model from baseline data (predicting impact of age and sex) and the model from the full dataset predicting impact of time are explored in this file
+
+## Baseline model
+
+This mode was built using the baseline data (Pre exercise) and the following arguement "args\<- list(formula = y \~ age + sex+ age:sex + (1\|participant),
+
+family = glmmTMB::nbinom2())" keyed into the Seq_Wrapper. Following model summary and evaluation, the transcripts that fulfilled the following conditions were filtered and saved .
+
+\*(Pr...z.. \<= 0.05 & fcthreshold == "s" & pval.disp \>= 0.5 & pval.unif \>= 0.5)\*
+
+where "Pr...z.." is the p value of the prediction,
+
+"fcthreshold" the log fold 2 estimate ; designated as significant (s) or not significant (ns) if the value is less than 0.5, o above respectively
+
+"pval.disp" is the pvalue of the evaluation of dispersion using the testDispersion () function of DHarma
+
+"pval. unif" is the pvalue of the eveluation of data uniformity using the testUniformity(9 function in DHarma.
+
+```{r , echo=F}
+source("./libraries.R")
+source("./R/Trainome_functions.R")
+```
+
+```{r, load the differentially expressed lncRNAs}
+base_df <- readRDS("./data/filtered_baseline_transcripts.RDS")
+
+#filter only those that mattered for age
+base_df <- base_df%>%
+  filter(coef == "ageold")
+```
+
+Load the baseline lncRNA dataframe and extract the values of the transcripts of interest from it
+
+```{r}
+#| echo: false
+baseline_lncRNAs <- readRDS("./data/baseline_data/baseline_lncRNAs.RDS")
+
+
+#extract the intersect from the transcripts of interest
+baseline_lncRNAs <- baseline_lncRNAs[baseline_lncRNAs$transcript_name %in% base_df$target, ]
+
+
+```
+
+The `echo: false` option disables the printing of code (only output is displayed).
+
+### Load protein coding data
+
+This will be used for gene correlation analyses
+
+```{r}
+#| echo: False
+#Load the protein coding transcripts
+
+protein_coding <- readr::read_csv("./data/protein_coding_transcripts.csv") %>%
+   mutate_at(2:158, ~ as.integer(round(., 0)))
+
+# Extract sample_ids that are common between lncRNAand protein_coding
+corr_intersect <- (intersect(colnames(baseline_lncRNAs), colnames(protein_coding)))
+
+#extract the intersect from the protein coding data
+protein_coding <- protein_coding %>%
+  subset( select = ( corr_intersect))
+
+```
+
+```{r}
+
+##check correlation of the genes of interest to the protein_coding_ones
+#This will only work when transformed
+#ress <- cor.test(as.matrix(t(protein_coding[,-1]), t(baseline_lncRNAs[,-1]), method = "spearman"))
+
+#ress.head()
+```
+
+Create new dataframes from the two datasets where the rownames of the new dataframes are the corresponding transcript names from the initial dataframes
+
+```{r}
+# baseline_of_int <- baseline_lncRNAs[, -1]
+# rownames(baseline_of_int) <- baseline_lncRNAs$transcript_name
+# 
+# 
+# protein_coding2 <- protein_coding[, -1]
+# rownames(protein_coding2) <- protein_coding$transcript_name
+```
+
+Calculate the correlation coefficients and p value for each lncRNA and protein-coding pair
+
+```{r}
+#select 5 rows of the baseline data and 5 of the protein coding data
+
+
+
+# test_baseline <- baseline_lncRNAs[1:50,]
+# test_protein <- protein_coding[1:100,]
+# 
+
+
+
+
+```
+
+#### Loop through the test data to see how it works
+
+bind_rows(cor_results_i)
+
+```{r}
+#| echo: False
+
+# cor_results_j <-list()
+# cor_results_i <- list()
+# 
+# for (i in 1:length(test_baseline$transcript_name)){
+#   
+#   
+#   for (j in 1:length(test_protein$transcript_name)){
+#   
+#     lncRNA_Vector <- as.numeric(test_baseline[i,-1])
+#     protein_coding_vector <- as.numeric(test_protein[j,-1 ])
+#   
+#     cor_test_result <- cor.test(lncRNA_Vector, protein_coding_vector)
+#   # cor_results <- do.call(rbind.data.frame(cor_test_result))
+#    
+#      cor_results_j[[j]] <- data.frame(
+#        lncRNA = as.character(test_baseline[i,1]),
+#        protein_coding_gene = as.character(test_protein[j, 1]),
+#        correlation_coefficient = cor_test_result$estimate,
+#        p_value = cor_test_result$p.value, 
+#        row.names = NULL)
+#     
+#  
+#    
+#   } 
+#   
+# cor_results_i[[i]] <-  bind_rows(cor_results_j)
+#   
+# }
+# 
+# 
+# bind_rows(cor_results_i) #%>%
+#   ggplot(aes(correlation_coefficient)) + geom_histogram()
+
+```
+
+```{r}
+#| echo: False
+
+cor_results_j <-list()
+cor_results_i <- list()
+
+for (i in 1:length(baseline_lncRNAs$transcript_name)){
+  
+  
+  for (j in 1:length(protein_coding$transcript_name)){
+  
+    lncRNA_Vector <- as.numeric(baseline_lncRNAs[i,-1])
+    protein_coding_vector <- as.numeric(protein_coding[j,-1 ])
+  
+    cor_test_result <- cor.test(lncRNA_Vector, protein_coding_vector)
+  # cor_results <- do.call(rbind.data.frame(cor_test_result))
+   
+     cor_results_j[[j]] <- data.frame(
+       lncRNA = as.character(baseline_lncRNAs[i,1]),
+       protein_coding_gene = as.character(protein_coding[j, 1]),
+       correlation_coefficient = cor_test_result$estimate,
+       p_value = cor_test_result$p.value, 
+       row.names = NULL)
+    
+ 
+   
+  } 
+  
+cor_results_i[[i]] <-  bind_rows(cor_results_j)
+  
+}
+
+
+correlation_results <- bind_rows(cor_results_i) #%>%
+  #ggplot(aes(correlation_coefficient)) + geom_histogram()
+
+```
+
+```{r}
+#saveRDS(correlation_results, file = "./data/Correlation_results_filtered_by_age_baseline.RDS")
+correlation_results %>%
+  round_df(3) %>%
+  ggplot(aes(y = p_value, x = correlation_coefficient)) + geom_point()+
+  ggtitle("Distribution of correlation coefficients by p values of the relationships between lncRNAs and protein coding genes") +
+  theme(axis.text = element_text(size = 15), text = element_text(size = 15))
+
+
+```
+
+Filter the subsets with pvalues of 0.05 or less
+
+```{r}
+significant_corr <- correlation_results %>% 
+  dplyr::filter(p_value <= 0.05)%>%
+  round_df(3)
+
+#saveRDS(significant_corr, file = "./data/baseline_data/Correlation_results_of_significance_for_age.RDS")
+```
+
+```{r}
+
+##Calculate the correlation coefficient and p-value of each pair
+# for (lncRNA in rownames(baseline_of_int)){
+#   for (protein_coding_trans in rownames(protein_coding2)){
+#     lncRNA_Vector <- as.numeric(baseline_of_int[lncRNA, ])
+#     protein_coding_vector <- as.numeric(protein_coding2[protein_coding_trans, ])
+#     
+#     
+#     
+#     cor_test_result <- cor.test(lncRNA_Vector, protein_coding_vector)
+#      #Append the results to the correlation table
+#     correlation_results <- rbind(correlation_results, data.frame(lncRNA = lncRNA,
+#                             protein_coding_gene = protein_coding_trans,
+#                           correlation_coefficient = cor_test_result$estimate,
+#                                             p_value = cor_test_result$p.value))
+#     
+# 
+# 
+#     
+#   }
+# }
+```
+
+```{r}
+#cor_test_result$estimate
+
+```
